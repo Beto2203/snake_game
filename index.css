@@ -7,7 +7,7 @@
     font-family: 'Press Start 2P', cursive;
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 800px) {
     :root {
         --game-size: 600px;
     }
@@ -15,7 +15,19 @@
 
 @media (max-width: 600px) {
     :root {
+        --game-size: 500px;
+    }
+}
+
+@media (max-width: 500px) {
+    :root {
         --game-size: 400px;
+    }
+}
+
+@media (max-width: 400px) {
+    :root {
+        --game-size: 300px;
     }
 }
 /* CSS Reset */
