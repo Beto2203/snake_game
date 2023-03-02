@@ -3,7 +3,8 @@
 }
 
 :root {
-    --game-size: 800px
+    --game-size: 800px;
+    font-family: 'Press Start 2P', cursive;
 }
 /* CSS Reset */
 /*html, body, div, span, applet, object, iframe,
@@ -50,6 +51,10 @@ table {
     border-spacing: 0;
 }*/
 
+body {
+    background-color: beige;
+}
+
 main {
     display: grid;
     grid-template-rows: var(--game-size) 200px;
@@ -57,6 +62,10 @@ main {
     width: 1000px;
     height: 1000px;
     margin: auto;
+}
+
+#gameContainer {
+    grid-column: 2 / 3;
 }
 
 #game {
@@ -67,15 +76,46 @@ main {
     margin: 0;
 }
 
-
 #menu {
-    font-family: 'Press Start 2P', cursive;
+    position: absolute;
+    width: calc(var(--game-size) - 10%);
+    height: calc(var(--game-size) / 1.5);
+    margin: auto;
+    left: 0;
+    right: 0;
+    top: 5%;
+    text-align: center;
+    display: grid;
+    justify-content: center;
+    align-items: center;
+    grid-template-columns: 20% 20% 20%;
+    grid-template-rows: 30% 20% 30% 30%;
+    border: 2px solid grey;
+    border-radius: 5px;
+    z-index: 5;
+    background-color: black;
+}
+#start {
+    grid-column: 1 / 4;
+    grid-row: 1 / 2;
+    font-size: 20px;
+}
+
+#select {
+    grid-column: 1 / 4;
+    align-self: center;
+    color: white;
+    font-size: 24px;
+}
+
+#appleCounter {
+    font-size: 30px;
 }
 
 .snake {
     background-color: greenyellow;
     border-radius: 10px;
-    border: 3px solid black;
+    border: 3px solid lawngreen;
     color: white;
 }
 
@@ -87,4 +127,10 @@ main {
 
 div {
     text-align: center;
+}
+
+#menu.hide {
+    display: none;
+    visibility: hidden;
+    z-index: -20;
 }
