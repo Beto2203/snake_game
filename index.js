@@ -1,12 +1,15 @@
 "use strict";
 const snakeGame = (function () {
     let size = 20;
-    let speed = 300;
+    let speed = 150;
     const container = document.getElementById('gameContainer') || document.createElement('section');
     let updateGameLoop;
     let alreadyMoved = false;
     let appleCounterValue = 0;
     const appleCounter = document.getElementById('appleCounter');
+    const menu = document.getElementById('menu');
+    const select = document.getElementById('select');
+    let record = localStorage.getItem('record');
     class SnakeObject {
         constructor() {
             this.length = 0;
@@ -15,6 +18,8 @@ const snakeGame = (function () {
             this._direction = 'up';
         }
         set direction(value) {
+            if (this._direction === value)
+                return;
             this._direction = value;
             alreadyMoved = true;
         }
@@ -48,7 +53,8 @@ const snakeGame = (function () {
     }
     const createNewGame = () => {
         appleCounterValue = 0;
-        appleCounter.innerText = appleCounterValue.toString();
+        appleCounter.innerText = appleCounterValue + '    record:' + ((record) ? `${record}` : '0');
+        menu.classList.add('hide');
         const game = document.createElement('section');
         game.id = 'game';
         game.classList.add('nes-container', 'is-rounded', 'is-dark');
@@ -119,10 +125,10 @@ const snakeGame = (function () {
                 || !newHeadElem || newHeadElem.classList.contains('snake')
                 ||
                     ((newHeadElem.classList.contains('leftLimit')
-                        || newHeadElem.classList.contains('rightLimit'))
-                        &&
+                        && headElem.classList.contains('rightLimit'))
+                        ||
                             (headElem.classList.contains('leftLimit')
-                                || headElem.classList.contains('rightLimit')))) {
+                                && newHeadElem.classList.contains('rightLimit')))) {
                 return false;
             }
             snake.push(newHeadElem);
@@ -147,7 +153,15 @@ const snakeGame = (function () {
         }, speed);
         const gameOver = () => {
             clearInterval(updateGameLoop);
-            console.log('END');
+            let newRecord = false;
+            if (!record || +record < appleCounterValue) {
+                localStorage.setItem('record', appleCounterValue.toString());
+                record = appleCounterValue.toString();
+                newRecord = true;
+            }
+            appleCounter.innerText = appleCounterValue + '    record:' + ((record) ? `${record}` : '0');
+            menu.classList.remove('hide');
+            select.innerHTML = `${(newRecord) ? '<p style="color: gold">New Record!!</p>' : '<p style="color: orangered">You Lost</p>'} Try again?`;
         };
     }
     window.addEventListener('keydown', (ev) => {
@@ -187,14 +201,14 @@ const snakeGame = (function () {
         },
         setSize(newSize) {
             if (newSize > 40 || newSize < 5) {
-                alert('Please insert a number within the indicated constraints');
+                alert('Please insert a size within the indicated constraints');
                 return;
             }
             size = newSize;
             this.newGame();
         },
         setSpeed(newSpeed) {
-            if (newSpeed > 1000 || newSpeed < 50) {
+            if (newSpeed > 500 || newSpeed < 50) {
                 alert('Please insert a speed within the indicated constraints');
                 return;
             }
@@ -202,6 +216,7 @@ const snakeGame = (function () {
         }
     };
 })();
+// TODO: add an option to select the size of the grid
 window.addEventListener('keydown', (ev) => {
     if (ev.key === 'Enter')
         snakeGame.newGame();
@@ -217,17 +232,18 @@ easy.addEventListener('click', () => {
     normal.classList.remove('is-primary');
     hard.classList.remove('is-primary');
     easy.classList.add('is-primary');
-    snakeGame.setSpeed(300);
+    snakeGame.setSpeed(200);
 });
 normal.addEventListener('click', () => {
     easy.classList.remove('is-primary');
     hard.classList.remove('is-primary');
     normal.classList.add('is-primary');
-    snakeGame.setSpeed(200);
+    snakeGame.setSpeed(150);
 });
 hard.addEventListener('click', () => {
     easy.classList.remove('is-primary');
     normal.classList.remove('is-primary');
     hard.classList.add('is-primary');
-    snakeGame.setSpeed(150);
+    snakeGame.setSpeed(120);
 });
+// TODO: Add a new mode for two players to compete for the apples, try with only one apple at the same time, then 2 apples and even 3.
