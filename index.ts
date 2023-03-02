@@ -11,8 +11,11 @@ const snakeGame: SnakeGame = (function () {
     let record = localStorage.getItem('record');
 
     class SnakeObject {
-      constructor() {
-
+      constructor(initialPos: number) {
+        this.push(findTile(initialPos + size * 2));
+        this.push(findTile(initialPos + size));
+        this.push(findTile(initialPos));
+        this.head.classList.add('head');
       }
 
       length = 0
@@ -61,7 +64,7 @@ const snakeGame: SnakeGame = (function () {
 
     const createNewGame = () => {
       appleCounterValue = 0;
-      appleCounter.innerText = appleCounterValue + '    record:' + ((record) ? `${record}` : '0');
+      appleCounter.innerText = 'record:' + ((record) ? `${record}` : '0');
       menu.classList.add('hide');
       const game = document.createElement('section');
       game.id = 'game';
@@ -86,13 +89,10 @@ const snakeGame: SnakeGame = (function () {
         game.appendChild(tileClone);
       }
 
-      snake = new SnakeObject();
-
       const mid = (size * Math.floor(size / 2)) + Math.floor((size - 1) / 2);
 
-      snake.push(findTile(mid + size * 2));
-      snake.push(findTile(mid + size));
-      snake.push(findTile(mid));
+      snake = new SnakeObject(mid);
+
     }
 
     const deleteGame = () => {
@@ -104,12 +104,15 @@ const snakeGame: SnakeGame = (function () {
 
     function gameLoop() {
       let apple: HTMLDivElement;
+      let appleElement = document.createElement('div');
+      appleElement.classList.add('apple');
       const newApple = () => {
         while (true) {
           const rand = Math.floor(Math.random() * size * size);
           if (!snake.bodyNum[rand]) {
             const newAppleTile = findTile(rand);
-            newAppleTile.classList.add('apple');
+            newAppleTile.classList.add('appleContainer');
+            newAppleTile.appendChild(appleElement);
             return newAppleTile;
           }
         }
@@ -147,8 +150,11 @@ const snakeGame: SnakeGame = (function () {
           return false;
         }
 
+        headElem.classList.remove('head');
+        newHeadElem.classList.add('head');
+
         snake.push(newHeadElem);
-        if (newHeadElem.classList.contains('apple')) {
+        if (newHeadElem.classList.contains('appleContainer')) {
           eat();
         } else {
           snake.removeTail();
@@ -158,7 +164,8 @@ const snakeGame: SnakeGame = (function () {
       };
 
       const eat = () => {
-        apple.classList.remove('apple');
+        apple.classList.remove('appleContainer');
+        apple.removeChild(apple.firstChild!);
         apple = newApple();
         appleCounterValue++;
         appleCounter.innerText = appleCounterValue.toString();
@@ -177,9 +184,9 @@ const snakeGame: SnakeGame = (function () {
           record = appleCounterValue.toString();
           newRecord = true;
         }
-        appleCounter.innerText = appleCounterValue + '    record:' + ((record) ? `${record}` : '0');
+        appleCounter.innerText = 'record:' + ((record) ? `${record}` : '0');
         menu.classList.remove('hide');
-        select.innerHTML = `${(newRecord) ? '<p style="color: gold">New Record!!</p>' : '<p style="color: orangered">You Lost</p>'} Try again?`
+        select.innerHTML = `${(newRecord) ? '<p style="color: gold">New Record!!</p>' : '<p style="color: orangered">You Lost</p>'} <p>Your points: ${appleCounterValue}</p> Try again?`
       };
 
     }
@@ -271,3 +278,4 @@ hard.addEventListener('click', () => {
 });
 
 // TODO: Add a new mode for two players to compete for the apples, try with only one apple at the same time, then 2 apples and even 3.
+// TODO: Make the website responsive
