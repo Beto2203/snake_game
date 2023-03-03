@@ -1,5 +1,5 @@
 const snakeGame: SnakeGame = (function () {
-    let size = 21;
+    let size = 20;
     let speed = 150;
     const container: HTMLElement = document.getElementById('gameContainer') || document.createElement('section');
     let updateGameLoop: number | undefined;
@@ -40,6 +40,9 @@ const snakeGame: SnakeGame = (function () {
       get head() {
         return this.body[this.length - 1];
       }
+      get tail() {
+        return this.body[0];
+      }
 
       push(elem: HTMLDivElementWithTileNumber) {
         if (!elem || !elem.dataset.tileNumber) return;
@@ -49,11 +52,6 @@ const snakeGame: SnakeGame = (function () {
         elem.classList.add(this.playerClass);
         elem.classList.add('player');
         this.length++;
-        if (this.length > 2) this.body[0].classList.add('tail');
-      }
-
-      reassignTail() {
-        this.body[0].classList.remove('tail');
       }
       removeTail() {
         const tail = this.body.shift()!;
@@ -61,14 +59,20 @@ const snakeGame: SnakeGame = (function () {
         delete this.bodyNum[tailNum];
         tail.classList.remove(this.playerClass);
         tail.classList.remove('player');
-        tail.classList.remove('tail');
         this.length--;
-        this.body[0].classList.add('tail');
         return tail;
       }
-
       alreadyMoved = false;
-
+      preMove() {
+       this.tail.classList.remove('player', this.playerClass);
+       this.head.classList.remove('head');
+      }
+      postMove() {
+        this.head.classList.add('head');
+      }
+      grow() {
+        this.tail.classList.add('player', this.playerClass);
+      }
       move() {
         const headElem = this.head;
         const head = +headElem.dataset.tileNumber;
@@ -88,33 +92,29 @@ const snakeGame: SnakeGame = (function () {
             break;
         }
         const newHeadElem = findTile(newHead);
-        if (newHeadElem && newHeadElem.classList.contains('head')) {
-          return 'headCollision';
-        }
         if ((newHead < 0 || newHead >= size * size
           || !newHeadElem
-          || (!newHeadElem.classList.contains('tail') && (newHeadElem.classList.contains('player') || newHeadElem.classList.contains(this.playerClass)))
+          || newHeadElem.classList.contains('player') || newHeadElem.classList.contains(this.playerClass))
           ||
           ((newHeadElem.classList.contains('leftLimit')
               && headElem.classList.contains('rightLimit'))
             ||
             (headElem.classList.contains('leftLimit')
               && newHeadElem.classList.contains('rightLimit')))
-        )) {
+        ) {
+          this.grow();
           return 'end';
         }
 
-        headElem.classList.remove('head');
-        newHeadElem.classList.add('head');
-
         this.push(newHeadElem);
         if (newHeadElem.classList.contains('appleContainer')) {
-          this.reassignTail();
+          this.grow();
           return 'eat';
         }
         this.removeTail();
         return 'move';
       };
+
     }
 
     let snake: SnakeObject;
@@ -149,7 +149,7 @@ const snakeGame: SnakeGame = (function () {
 
       let startPos = (size * Math.floor(size / 2));
       if (twoPlayers) {
-        snake = new SnakeObject(startPos + size - 2, 'snake');
+        snake = new SnakeObject(startPos + size - 3, 'snake');
         snake2 = new SnakeObject(startPos + 2, 'snake2');
         players.push(snake2);
       } else {
@@ -165,6 +165,7 @@ const snakeGame: SnakeGame = (function () {
       if (container.firstChild) {
         container.removeChild(container.firstChild);
       }
+      players = [];
     }
 
     function gameLoop() {
@@ -193,28 +194,36 @@ const snakeGame: SnakeGame = (function () {
       };
 
       updateGameLoop = setInterval(() => {
-          let states: ('move' | 'eat' | 'end' | 'headCollision')[] = [];
+        let states: ('move' | 'eat' | 'end' | 'headCollision')[] = [];
+        snake.preMove();
+        if (twoPlayers) {
+          snake2.preMove();
+        }
+
         for (const player of players) {
           const state = player.move();
             states.push(state);
           player.alreadyMoved = false;
-          if (state === 'headCollision') break;
+        }
+
+        snake.postMove();
+        if (twoPlayers) {
+          snake2.postMove();
         }
 
         if (twoPlayers) {
 
           if (states[0] === 'headCollision' || states[1] === 'headCollision') {
-            gameOver(
-              players[0].length > players[1].length
-                ? players[0].playerClass
-                : players[0].length === players[1].length
-                  ? 'tie'
-                  : players[1].playerClass
-            );
           }
           switch (states[0] + ' ' + states[1]) {
             case 'end end':
-              gameOver('tie');
+              gameOver(
+                players[0].length > players[1].length
+                  ? players[0].playerClass
+                  : players[0].length === players[1].length
+                    ? 'tie'
+                    : players[1].playerClass
+              );
               break;
             case 'end eat':
               eat();
@@ -399,7 +408,7 @@ easy.addEventListener('click', () => {
   normal.classList.remove('is-primary');
   hard.classList.remove('is-primary');
   easy.classList.add('is-primary');
-  snakeGame.setSpeed(200);
+  snakeGame.setSpeed(400);
 });
 normal.addEventListener('click', () => {
   easy.classList.remove('is-primary');
