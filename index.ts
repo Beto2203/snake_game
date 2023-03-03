@@ -408,7 +408,7 @@ easy.addEventListener('click', () => {
   normal.classList.remove('is-primary');
   hard.classList.remove('is-primary');
   easy.classList.add('is-primary');
-  snakeGame.setSpeed(400);
+  snakeGame.setSpeed(200);
 });
 normal.addEventListener('click', () => {
   easy.classList.remove('is-primary');
