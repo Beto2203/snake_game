@@ -114,7 +114,7 @@ main {
 
 #menu {
     position: absolute;
-    width: calc(var(--game-size) - 10%);
+    width: var(--game-size);
     height: calc(var(--game-size) / 1.5);
     margin: auto;
     left: 0;

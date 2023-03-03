@@ -72,14 +72,6 @@ const snakeGame: SnakeGame = (function () {
 
       container.appendChild(game);
 
-      const sheet = new CSSStyleSheet();
-      sheet.replaceSync(`
-            #game {
-                grid-template-columns: repeat(auto-fill, ${(game.offsetWidth - 18) / size}px);
-                grid-template-rows: repeat(auto-fill, ${(game.offsetHeight - 18) / size}px);
-            }`);
-      document.adoptedStyleSheets = [sheet];
-
       const tile = document.createElement('div');
       for (let i = 0; i < size * size; i++) {
         const tileClone = <HTMLDivElementWithTileNumber>tile.cloneNode();
@@ -89,10 +81,12 @@ const snakeGame: SnakeGame = (function () {
         game.appendChild(tileClone);
       }
 
+      game.style.gridTemplateColumns = `repeat(auto-fill, ${(game.offsetWidth - 18) / size}px)`;
+      game.style.gridTemplateRows = `repeat(auto-fill, ${(game.offsetHeight - 18) / size}px)`;
+
       const mid = (size * Math.floor(size / 2)) + Math.floor((size - 1) / 2);
 
       snake = new SnakeObject(mid);
-
     }
 
     const deleteGame = () => {

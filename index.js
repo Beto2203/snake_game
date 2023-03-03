@@ -63,13 +63,6 @@ const snakeGame = (function () {
         game.id = 'game';
         game.classList.add('nes-container', 'is-rounded', 'is-dark');
         container.appendChild(game);
-        const sheet = new CSSStyleSheet();
-        sheet.replaceSync(`
-            #game {
-                grid-template-columns: repeat(auto-fill, ${(game.offsetWidth - 18) / size}px);
-                grid-template-rows: repeat(auto-fill, ${(game.offsetHeight - 18) / size}px);
-            }`);
-        document.adoptedStyleSheets = [sheet];
         const tile = document.createElement('div');
         for (let i = 0; i < size * size; i++) {
             const tileClone = tile.cloneNode();
@@ -80,6 +73,8 @@ const snakeGame = (function () {
             tileClone.dataset.tileNumber = i.toString();
             game.appendChild(tileClone);
         }
+        game.style.gridTemplateColumns = `repeat(auto-fill, ${(game.offsetWidth - 18) / size}px)`;
+        game.style.gridTemplateRows = `repeat(auto-fill, ${(game.offsetHeight - 18) / size}px)`;
         const mid = (size * Math.floor(size / 2)) + Math.floor((size - 1) / 2);
         snake = new SnakeObject(mid);
     };
