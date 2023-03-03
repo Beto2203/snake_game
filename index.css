@@ -115,7 +115,7 @@ main {
 #menu {
     position: absolute;
     width: var(--game-size);
-    height: calc(var(--game-size) / 1.5);
+    height: var(--game-size);
     margin: auto;
     left: 0;
     right: 0;
@@ -124,33 +124,38 @@ main {
     display: grid;
     justify-content: center;
     align-items: center;
-    grid-template-columns: 20% 20% 20%;
-    grid-template-rows: 30% 20% 30% 30%;
+    grid-template-columns: 25% 25% 25%;
+    grid-template-rows: 30% 20% 20% 30%;
     border: 2px solid grey;
     border-radius: 5px;
     z-index: 5;
     background-color: rgba(0, 0, 0, 50%);
-
 }
-#start {
+
+#menu button {
+    height: 40%;
+    font-size: 24px;
+}
+
+#menu #start {
     grid-column: 1 / 4;
     grid-row: 1 / 2;
-    font-size: 20px;
+    font-size: 32px;
 }
 
 #select {
     grid-column: 1 / 4;
     align-self: center;
     color: white;
-    font-size: 24px;
+    font-size: 28px;
 }
 
 @media (max-width: 1000px) {
     #menu {
-        font-size: 16px;
+        font-size: 20px;
     }
     #menu button {
-        font-size: 12px;
+        font-size: 16px;
     }
     #start {
         font-size: 14px;
