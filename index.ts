@@ -1,32 +1,36 @@
 const snakeGame: SnakeGame = (function () {
-    let size = 20;
+    let size = 21;
     let speed = 150;
     const container: HTMLElement = document.getElementById('gameContainer') || document.createElement('section');
     let updateGameLoop: number | undefined;
-    let alreadyMoved = false;
     let appleCounterValue = 0;
     const appleCounter = document.getElementById('appleCounter')!;
     const menu = document.getElementById('menu')!;
     const select = document.getElementById('select')!;
     let record = localStorage.getItem('record');
+    let twoPlayers = false;
 
     class SnakeObject {
-      constructor(initialPos: number) {
+      constructor(initialPos: number, playerClass: string) {
+        this.playerClass = playerClass;
         this.push(findTile(initialPos + size * 2));
         this.push(findTile(initialPos + size));
         this.push(findTile(initialPos));
         this.head.classList.add('head');
+
       }
 
+      playerClass: string;
       length = 0
       body: HTMLDivElementWithTileNumber[] = []
       bodyNum: { [key: string]: string } = {}
+      gameState = 'start';
       private _direction: 'up' | 'down' | 'left' | 'right' = 'up'
 
       set direction(value) {
         if (this._direction === value) return;
         this._direction = value;
-        alreadyMoved = true;
+        this.alreadyMoved = true;
       }
 
       get direction() {
@@ -42,21 +46,80 @@ const snakeGame: SnakeGame = (function () {
         this.body.push(elem);
         const tileNum = elem.dataset.tileNumber;
         this.bodyNum[tileNum] = this.direction;
-        elem.classList.add('snake');
+        elem.classList.add(this.playerClass);
+        elem.classList.add('player');
         this.length++;
+        if (this.length > 2) this.body[0].classList.add('tail');
       }
 
+      reassignTail() {
+        this.body[0].classList.remove('tail');
+      }
       removeTail() {
         const tail = this.body.shift()!;
         const tailNum = tail.dataset.tileNumber;
         delete this.bodyNum[tailNum];
-        tail.classList.remove('snake');
+        tail.classList.remove(this.playerClass);
+        tail.classList.remove('player');
+        tail.classList.remove('tail');
         this.length--;
+        this.body[0].classList.add('tail');
         return tail;
       }
+
+      alreadyMoved = false;
+
+      move() {
+        const headElem = this.head;
+        const head = +headElem.dataset.tileNumber;
+        let newHead;
+        switch (this.direction) {
+          case 'up':
+            newHead = head - size;
+            break;
+          case 'down':
+            newHead = head + size;
+            break;
+          case "left":
+            newHead = head - 1;
+            break;
+          case "right":
+            newHead = head + 1;
+            break;
+        }
+        const newHeadElem = findTile(newHead);
+        if (newHeadElem && newHeadElem.classList.contains('head')) {
+          return 'headCollision';
+        }
+        if ((newHead < 0 || newHead >= size * size
+          || !newHeadElem
+          || (!newHeadElem.classList.contains('tail') && (newHeadElem.classList.contains('player') || newHeadElem.classList.contains(this.playerClass)))
+          ||
+          ((newHeadElem.classList.contains('leftLimit')
+              && headElem.classList.contains('rightLimit'))
+            ||
+            (headElem.classList.contains('leftLimit')
+              && newHeadElem.classList.contains('rightLimit')))
+        )) {
+          return 'end';
+        }
+
+        headElem.classList.remove('head');
+        newHeadElem.classList.add('head');
+
+        this.push(newHeadElem);
+        if (newHeadElem.classList.contains('appleContainer')) {
+          this.reassignTail();
+          return 'eat';
+        }
+        this.removeTail();
+        return 'move';
+      };
     }
 
     let snake: SnakeObject;
+    let snake2: SnakeObject;
+    let players: SnakeObject[] = [];
 
     function findTile(tileNum: number) {
       return <HTMLDivElementWithTileNumber>document.querySelector(`[data-tile-number="${tileNum}"]`);
@@ -84,9 +147,17 @@ const snakeGame: SnakeGame = (function () {
       game.style.gridTemplateColumns = `repeat(auto-fill, ${(game.offsetWidth - 18) / size}px)`;
       game.style.gridTemplateRows = `repeat(auto-fill, ${(game.offsetHeight - 18) / size}px)`;
 
-      const mid = (size * Math.floor(size / 2)) + Math.floor((size - 1) / 2);
+      let startPos = (size * Math.floor(size / 2));
+      if (twoPlayers) {
+        snake = new SnakeObject(startPos + size - 2, 'snake');
+        snake2 = new SnakeObject(startPos + 2, 'snake2');
+        players.push(snake2);
+      } else {
+        snake = new SnakeObject(startPos + Math.floor((size - 1) / 2), 'snake');
+      }
+      players.push(snake);
 
-      snake = new SnakeObject(mid);
+      createPlayerTwoControls();
     }
 
     const deleteGame = () => {
@@ -113,50 +184,6 @@ const snakeGame: SnakeGame = (function () {
       };
       apple = newApple();
 
-      const move = () => {
-        const headElem = snake.head;
-        const head = +headElem.dataset.tileNumber;
-        let newHead;
-        switch (snake.direction) {
-          case 'up':
-            newHead = head - size;
-            break;
-          case 'down':
-            newHead = head + size;
-            break;
-          case "left":
-            newHead = head - 1;
-            break;
-          case "right":
-            newHead = head + 1;
-            break;
-        }
-        const newHeadElem = findTile(newHead);
-        if (newHead < 0 || newHead >= size * size
-          || !newHeadElem || newHeadElem.classList.contains('snake')
-          ||
-          ((newHeadElem.classList.contains('leftLimit')
-              && headElem.classList.contains('rightLimit'))
-            ||
-            (headElem.classList.contains('leftLimit')
-              && newHeadElem.classList.contains('rightLimit')))
-        ) {
-          return false;
-        }
-
-        headElem.classList.remove('head');
-        newHeadElem.classList.add('head');
-
-        snake.push(newHeadElem);
-        if (newHeadElem.classList.contains('appleContainer')) {
-          eat();
-        } else {
-          snake.removeTail();
-        }
-
-        return true;
-      };
-
       const eat = () => {
         apple.classList.remove('appleContainer');
         apple.removeChild(apple.firstChild!);
@@ -166,27 +193,138 @@ const snakeGame: SnakeGame = (function () {
       };
 
       updateGameLoop = setInterval(() => {
-        if (!move()) gameOver();
-        alreadyMoved = false;
+          let states: ('move' | 'eat' | 'end' | 'headCollision')[] = [];
+        for (const player of players) {
+          const state = player.move();
+            states.push(state);
+          player.alreadyMoved = false;
+          if (state === 'headCollision') break;
+        }
+
+        if (twoPlayers) {
+
+          if (states[0] === 'headCollision' || states[1] === 'headCollision') {
+            gameOver(
+              players[0].length > players[1].length
+                ? players[0].playerClass
+                : players[0].length === players[1].length
+                  ? 'tie'
+                  : players[1].playerClass
+            );
+          }
+          switch (states[0] + ' ' + states[1]) {
+            case 'end end':
+              gameOver('tie');
+              break;
+            case 'end eat':
+              eat();
+              gameOver(players[1].playerClass);
+              break
+            case 'end move':
+              gameOver(players[1].playerClass);
+              break;
+            case 'eat end':
+              eat();
+              gameOver(players[0].playerClass);
+              break;
+            case 'move end':
+              gameOver(players[0].playerClass);
+              break;
+            case 'move move':
+              break;
+            case 'move eat':
+              eat();
+              break;
+            case 'eat move':
+              eat();
+              break;
+          }
+
+        } else {
+          switch (states[0]) {
+            case "eat":
+              eat();
+              break;
+            case "end":
+              gameOver(players[0].playerClass);
+              break;
+          }
+        }
       }, speed);
 
-      const gameOver = () => {
+      window.addEventListener('keydown', (ev) => {
+        if (ev.key === ' ') {
+          clearInterval(updateGameLoop);
+        }
+      });
+
+      const gameOver = (result: string) => {
         clearInterval(updateGameLoop);
         let newRecord = false;
-        if (!record || +record < appleCounterValue) {
-          localStorage.setItem('record', appleCounterValue.toString());
-          record = appleCounterValue.toString();
-          newRecord = true;
+        if (twoPlayers) {
+          removePlayerTwoControls();
+          if (result === 'tie') {
+            select.innerHTML = `TIE!!`
+          } else {
+            select.innerHTML = `Player ${result === 'snake' ? 'One' : 'Two'} Wins!!`;
+          }
+        } else {
+          if (!record || +record < appleCounterValue) {
+            localStorage.setItem('record', appleCounterValue.toString());
+            record = appleCounterValue.toString();
+            newRecord = true;
+          }
+          select.innerHTML = `${(newRecord) ? '<p style="color: gold">New Record!!</p>' : '<p style="color: orangered">You Lost</p>'}`
         }
+        select.innerHTML += `Try again?`
         appleCounter.innerText = 'record:' + ((record) ? `${record}` : '0');
         menu.classList.remove('hide');
-        select.innerHTML = `${(newRecord) ? '<p style="color: gold">New Record!!</p>' : '<p style="color: orangered">You Lost</p>'} <p>Your points: ${appleCounterValue}</p> Try again?`
+        players = [];
       };
 
     }
 
+    const playerTwoControlsListener = (ev: KeyboardEvent) => {
+        if (snake2.alreadyMoved) return;
+        switch (ev.key) {
+          case 'S':
+          case 's':
+            if (snake2.direction !== 'up') {
+              snake2.direction = 'down';
+            }
+            break;
+          case 'W':
+          case 'w':
+            if (snake2.direction !== 'down') {
+              snake2.direction = 'up';
+            }
+            break;
+          case 'D':
+          case 'd':
+            if (snake2.direction !== 'left') {
+              snake2.direction = 'right';
+            }
+            break;
+          case 'A':
+          case 'a':
+            if (snake2.direction !== 'right') {
+              snake2.direction = 'left';
+            }
+        }
+    };
+
+    function createPlayerTwoControls() {
+      if (twoPlayers) {
+        window.addEventListener('keydown', playerTwoControlsListener);
+      }
+    }
+
+    function removePlayerTwoControls() {
+      window.removeEventListener('keydown', playerTwoControlsListener);
+    }
+
     window.addEventListener('keydown', (ev) => {
-      if (alreadyMoved) return;
+      if (snake.alreadyMoved) return;
       switch (ev.key) {
         case 'Down':
         case 'ArrowDown':
@@ -234,6 +372,9 @@ const snakeGame: SnakeGame = (function () {
           return;
         }
         speed = newSpeed;
+      },
+      setPlayers(versus) {
+        twoPlayers = versus;
       }
     }
   }
@@ -248,6 +389,8 @@ const startGame = document.getElementById('start')!;
 const easy = document.getElementById('easy')!;
 const normal = document.getElementById('normal')!;
 const hard = document.getElementById('hard')!;
+const single = document.getElementById('single')!;
+const versus = document.getElementById('versus')!;
 
 startGame.addEventListener('click', () => {
   snakeGame.newGame();
@@ -271,5 +414,14 @@ hard.addEventListener('click', () => {
   snakeGame.setSpeed(120);
 });
 
-// TODO: Add a new mode for two players to compete for the apples, try with only one apple at the same time, then 2 apples and even 3.
-// TODO: Make the website responsive
+single.addEventListener('click', () => {
+  snakeGame.setPlayers(false);
+  single.classList.add('is-primary');
+  versus.classList.remove('is-primary')
+});
+
+versus.addEventListener('click', () => {
+  snakeGame.setPlayers(true);
+  versus.classList.add('is-primary');
+  single.classList.remove('is-primary')
+});

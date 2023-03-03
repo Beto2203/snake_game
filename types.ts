@@ -4,6 +4,7 @@ interface SnakeGame {
     newGame: VoidFunction,
     setSize: SetNum,
     setSpeed: SetNum,
+    setPlayers: (versus: boolean) => void;
 }
 
 
